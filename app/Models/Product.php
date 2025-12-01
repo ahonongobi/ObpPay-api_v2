@@ -1,0 +1,42 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+
+class Product extends Model
+{
+    use HasFactory;
+    public function category()
+    {
+        return $this->belongsTo(Categories::class);
+    }
+
+    protected $fillable = [
+        'name',
+        'description',
+        'price',
+        'category_id',
+        'is_active',
+        'image',
+        'stock',
+    ];
+
+    protected $casts = [
+        'is_active' => 'boolean',
+    ];
+
+
+    public function getImageAttribute($value)
+    {
+        if (!$value) return null;
+
+        return url($value);
+    }
+
+    public function installments()
+    {
+        return $this->hasMany(\App\Models\InstallmentPlan::class, 'product_id');
+    }
+}
