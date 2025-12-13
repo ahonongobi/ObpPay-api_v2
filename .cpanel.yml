@@ -17,4 +17,4 @@ deployment:
     # 5. Clear all Laravel caches
     - rm -f /home/obppayco/laravel-project/bootstrap/cache/config.php
     - rm -f /home/obppayco/laravel-project/bootstrap/cache/packages.php
-    - rm -rf /home/obppayco/laravel-project/storage/framework/views/*
+    #- rm -rf /home/obppayco/laravel-project/storage/framework/views/*
