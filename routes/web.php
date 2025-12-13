@@ -180,3 +180,55 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::post('/withdrawals/{id}/reject', [App\Http\Controllers\Admin\WithdrawalController::class, 'reject'])
         ->name('admin.withdrawals.reject');
 });
+
+// Route admin.wallets.credit and admin.wallets.credit.admin
+Route::prefix('admin/wallets')->middleware(['auth', 'admin'])->group(function () {
+
+    Route::get('/credit', [\App\Http\Controllers\Admin\WalletController::class, 'showCreditForm'])
+        ->name('admin.wallets.credit');
+
+    Route::get('/creditadmin', [\App\Http\Controllers\Admin\WalletController::class, 'credit'])
+        ->name('admin.wallets.credit.admin');
+
+    Route::post('/credit', [\App\Http\Controllers\Admin\WalletController::class, 'processCredit'])
+        ->name('admin.wallets.processCredit');
+});
+
+// Fee calculation route
+use App\Services\FeeService;
+use Illuminate\Http\Request;
+
+Route::post('/fees/calculate', function (Request $request) {
+    $request->validate([
+        'amount' => 'required|numeric|min:1',
+        'type'   => 'required|string'
+    ]);
+
+    $amount = $request->amount;
+    $type = $request->type;
+
+    switch ($type) {
+        case 'transfer_to_gsm':
+            $total = FeeService::transferToGSM($amount);
+            break;
+
+        case 'withdraw':
+            $total = FeeService::withdraw($amount);
+            break;
+
+        case 'transfer_obppay_to_obppay':
+            $total = FeeService::transferObpToObp($amount);
+            break;
+
+        default:
+            return response()->json(['error' => 'Invalid fee type'], 400);
+    }
+
+    return response()->json([
+        'amount' => $amount,
+        'total_with_fees' => $total,
+        'fees' => $total - $amount
+    ]);
+});
+
+

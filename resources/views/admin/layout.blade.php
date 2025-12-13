@@ -312,15 +312,24 @@ body.dark-mode .stat-green {
         <i class="bi bi-people-fill me-2"></i> Gestion admins
         </a>
          @endif
-
-        
-
-
          <a href="{{ route('admin.users.index') }}"
            class="{{ request()->routeIs('admin.users.index') ? 'active' : '' }}">
             <i class="bi bi-people me-2"></i> Utilisateurs
         </a>
 
+        {{-- crediter le compte user visible for admin and superadmin --}}
+        <a href="{{ route('admin.wallets.credit') }}"
+           class="{{ request()->routeIs('admin.wallets.credit') ? 'active' : '' }}">
+            <i class="bi bi-plus-circle me-2"></i> Créditer un client
+        </a>
+
+        {{-- crediter le compte des admins visible for superadmin only --}}
+        @if(auth()->user()->role === 'superadmin')
+        <a href="{{ route('admin.wallets.credit.admin') }}"
+           class="{{ request()->routeIs('admin.wallets.credit.admin') ? 'active' : '' }}">
+            <i class="bi bi-plus-circle me-2"></i> Créditer un admin
+        </a>
+        @endif
 
         <a href="{{ route('admin.kyc.index') }}"
            class="{{ request()->routeIs('admin.kyc.index') ? 'active' : '' }}">

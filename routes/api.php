@@ -69,8 +69,49 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/momo/pay', [MoMoController::class, 'mobilePay']);  // connected to flutter
 
    
+
+    
     
 });
+
+
+
+// Fee calculation route
+use App\Services\FeeService;
+
+Route::post('/fees/calculate', function (Request $request) {
+    $request->validate([
+        'amount' => 'required|numeric|min:1',
+        'type'   => 'required|string'
+    ]);
+
+    $amount = $request->amount;
+    $type = $request->type;
+
+    switch ($type) {
+        case 'transfer_to_gsm':
+            $total = FeeService::transferToGSM($amount);
+            break;
+
+        case 'withdraw':
+            $total = FeeService::withdraw($amount);
+            break;
+
+        case 'transfer_obppay_to_obppay':
+            $total = FeeService::transferObpToObp($amount);
+            break;
+
+        default:
+            return response()->json(['error' => 'Invalid fee type'], 400);
+    }
+
+    return response()->json([
+        'amount' => $amount,
+        'total_with_fees' => $total,
+        'fees' => $total - $amount
+    ]);
+});
+
 
 Route::middleware('auth:sanctum')->get('/user/score', function (Request $request) {
     return response()->json([

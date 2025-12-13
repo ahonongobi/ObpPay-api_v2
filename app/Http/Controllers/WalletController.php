@@ -70,6 +70,8 @@ class WalletController extends Controller
         $data = $request->validate([
             'to_obp_id' => 'required|string|exists:users,obp_id',
             'amount'    => 'required|numeric|min:0.01',
+            'fees'      => 'required|numeric|min:0',     // frais envoyés depuis Flutter
+            'total'     => 'required|numeric|min:0.01',  // total = amount + fees
             'note'      => 'nullable|string|max:255',
         ]);
 
@@ -83,22 +85,35 @@ class WalletController extends Controller
         $fromWallet = $fromUser->wallet;
         $toWallet   = $toUser->wallet;
 
-        if ($fromWallet->balance < $data['amount']) {
+        if ($fromWallet->balance < $data['total']) {
             return response()->json(['message' => 'Solde insuffisant.'], 422);
         }
 
         DB::transaction(function () use ($fromWallet, $toWallet, $fromUser, $toUser, $data) {
-            $fromWallet->decrement('balance', $data['amount']);
+            $fromWallet->decrement('balance', $data['total']);
             $toWallet->increment('balance', $data['amount']);
 
             Transactions::create([
                 'user_id'  => $fromUser->id,
                 'type'     => 'transfer_out',
-                'amount'   => $data['amount'],
+                'amount'   => $data['total'],
                 'currency' => $fromWallet->currency,
                 'description' => 'Transfert vers ' . $toUser->obp_id,
                 'status'   => 'completed',
-                'meta'     => ['to' => $toUser->obp_id, 'note' => $data['note'] ?? ''],
+                'meta' => [
+                    'to' => $toUser->obp_id,
+                    'note' => $data['note'] ?? '',
+                    'details' => [
+                        'amount_initial' => $data['amount'], // Montant sans frais
+                        'fees' => $data['fees'],            // Montant des frais
+                        'total' => $data['total'],          // amount + fees
+                        'rate' => [
+                            'type' => 'transfer_obppay_to_obppay',
+                            'value' => config('fees.transfer_obppay_to_obppay'),
+                        ],
+                    ],
+                ],
+
             ]);
 
             Transactions::create([
@@ -108,7 +123,13 @@ class WalletController extends Controller
                 'currency' => $toWallet->currency,
                 'description' => 'Transfert reçu de ' . $fromUser->obp_id,
                 'status'   => 'completed',
-                'meta'     => ['from' => $fromUser->obp_id, 'note' => $data['note'] ?? ''],
+                'meta'     => [
+                    'from' => $fromUser->obp_id,
+                     'details' => [
+                        'amount_received' => $data['amount'],
+                    ],
+                    'note' => $data['note'] ?? '',
+                ],
             ]);
         });
         add_score($fromUser, 5, "transfer");

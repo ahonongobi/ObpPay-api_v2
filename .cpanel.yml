@@ -1,6 +1,6 @@
 deployment:
   tasks:
-    # 1. Pull latest code from GitHub
+    # 1. Pull latest code from GitHub Gobi repos
     - /usr/local/cpanel/3rdparty/bin/git pull
 
     # 2. Ensure public_html exists

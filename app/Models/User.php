@@ -112,4 +112,17 @@ class User extends Authenticatable
             }
         });
     }
+
+    protected static function booted()
+    {
+        static::created(function ($user) {
+            if (!$user->wallet) {
+                \App\Models\Wallet::create([
+                    'user_id' => $user->id,
+                    'balance' => 0,
+                    'currency' => 'XOF',
+                ]);
+            }
+        });
+    }
 }
