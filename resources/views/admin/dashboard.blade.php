@@ -57,11 +57,30 @@ body.dark-mode .search-input:focus {
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h1 class="fw-bold text-primary">Dashboard</h1>
 
-    <form method="POST" action="/admin/logout">
-        @csrf
-        <button class="btn btn-danger shadow">Se déconnecter</button>
-    </form>
+    <div class="d-flex align-items-center gap-3">
+
+        <!-- BALANCE CARD -->
+        <div class="d-flex align-items-center bg-light p-2 px-3 rounded shadow-sm">
+            <i class="bi bi-wallet2 text-primary fs-4 me-2"></i>
+
+            <div>
+                <small class="text-muted">Votre solde</small><br>
+                <span class="fw-bold text-dark">
+                    {{ number_format(auth()->user()->wallet->balance ?? 0, 0, ',', ' ') }} XOF
+                </span>
+            </div>
+        </div>
+
+        <!-- LOGOUT BUTTON -->
+        <form method="POST" action="/admin/logout">
+            @csrf
+            <button class="btn btn-danger shadow">
+                Se déconnecter
+            </button>
+        </form>
+    </div>
 </div>
+
 
 <div class="row g-4">
 
