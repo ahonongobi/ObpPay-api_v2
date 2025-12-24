@@ -98,14 +98,39 @@ body.dark-mode .plan-row {
         <!-- CATEGORY -->
         <div class="col-md-6">
             <label class="form-label">Catégorie</label>
-            <select name="category_id" class="form-select">
+            <select name="category_id" class="form-select" id="categorySelect" onchange="checkOtherCategory()">
                 <option value="">— Aucune —</option>
 
                 @foreach($categories as $cat)
                     <option value="{{ $cat->id }}">{{ $cat->name }}</option>
                 @endforeach
+
+
+                 <option value="other">Autres</option>
             </select>
+
+                    <!-- Custom category input (hidden by default) -->
+        <div class="col-md-6 d-none mt-3" id="otherCategoryDiv">
+            <label class="form-label">Nouvelle catégorie(Entrez une nouvelle catégorie)</label>
+            <input type="text" name="other_category" class="form-control" placeholder="">
         </div>
+
+        </div>
+
+
+
+        <script>
+        function checkOtherCategory() {
+            const select = document.getElementById('categorySelect');
+            const otherDiv = document.getElementById('otherCategoryDiv');
+
+            if (select.value === 'other') {
+                otherDiv.classList.remove('d-none');
+            } else {
+                otherDiv.classList.add('d-none');
+            }
+        }
+        </script>
 
         <!-- TAGS -->
         <div class="col-md-6">
@@ -216,5 +241,8 @@ function removePlan(index) {
     document.getElementById("plan-" + index).remove();
 }
 </script>
+
+
+
 
 @endsection

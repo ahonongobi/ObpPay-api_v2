@@ -153,7 +153,7 @@ body.dark-mode .add-product-btn {
             @foreach($products as $p)
             <tr>
                 <td>
-                    <img src="{{ $p->image ? url($p->image) : 'https://via.placeholder.com/60' }}"
+                    <img src="{{ $p->image ? asset($p->image) : 'https://via.placeholder.com/60' }}"
                          class="rounded"
                          width="60">
                 </td>

@@ -20,16 +20,27 @@ class MarketplaceController extends Controller
 
     public function store(Request $request)
     {
+
+        // First, handle "Autres"
+        if ($request->category_id === 'other' && !empty($request->other_category)) {
+            $newCategory = \App\Models\Categories::create([
+                'name' => $request->other_category
+            ]);
+            $request->merge(['category_id' => $newCategory->id]);
+        }
+
         $validated = $request->validate([
             'name' => 'required',
             'price' => 'required|numeric',
             'stock' => 'required|numeric',
             'category_id' => 'nullable|exists:categories,id',
+            'other_category' => 'nullable|string', 
             'description' => 'nullable',
             'tags' => 'nullable|string',
             'image' => 'image',
         ]);
 
+        
         // Save product
         if ($request->hasFile('image')) {
             $path = $request->file('image')->store('products', 'public');

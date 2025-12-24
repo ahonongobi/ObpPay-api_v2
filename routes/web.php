@@ -232,3 +232,15 @@ Route::post('/fees/calculate', function (Request $request) {
 });
 
 
+
+// routes for crediter mon compte for superadmin
+Route::prefix('admin/wallets')->middleware(['auth', 'admin'])->group(function () {
+
+    Route::get('/credit/self', [\App\Http\Controllers\Admin\WalletController::class, 'showSelfCreditForm'])
+        ->name('admin.wallets.credit.self');
+
+    Route::post('/credit/self', [\App\Http\Controllers\Admin\WalletController::class, 'processSelfCredit'])
+        ->name('admin.wallets.credit.self.post');
+});
+
+

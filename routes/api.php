@@ -3,6 +3,7 @@
 use App\Http\Controllers\AdminController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Services\FeeService;
 
 /*
 |--------------------------------------------------------------------------
@@ -77,7 +78,6 @@ Route::middleware('auth:sanctum')->group(function () {
 
 
 // Fee calculation route
-use App\Services\FeeService;
 
 Route::post('/fees/calculate', function (Request $request) {
     $request->validate([
@@ -181,12 +181,49 @@ Route::post('/support/message', [SupportController::class, 'send'])
     ->middleware('auth:sanctum');
 
 
-// ------ ADMIN SIDE ------
-Route::middleware(['auth:sanctum', 'is_admin'])->group(function () {
-    Route::get('/admin/withdraws', [AdminController::class, 'index']);
-    Route::post('/admin/withdraws/{id}/approve', [AdminController::class, 'approve']);
-    Route::post('/admin/withdraws/{id}/reject', [AdminController::class, 'reject']);
+// Fee calculation route
+
+
+Route::post('/fees/calculate', function (Request $request) {
+    $request->validate([
+        'amount' => 'required|numeric|min:1',
+        'type'   => 'required|string'
+    ]);
+
+    $amount = $request->amount;
+    $type = $request->type;
+
+    switch ($type) {
+        case 'transfer_to_gsm':
+            $total = FeeService::transferToGSM($amount);
+            break;
+
+        case 'withdraw':
+            $total = FeeService::withdraw($amount);
+            break;
+
+        case 'transfer_obppay_to_obppay':
+            $total = FeeService::transferObpToObp($amount);
+            break;
+
+        default:
+            return response()->json(['error' => 'Invalid fee type'], 400);
+    }
+
+    return response()->json([
+        'amount' => $amount,
+        'total_with_fees' => $total,
+        'fees' => $total - $amount
+    ]);
 });
+
+
+// ------ ADMIN SIDE ------
+//Route::middleware(['auth:sanctum', 'is_admin'])->group(function () {
+ //   Route::get('/admin/withdraws', [AdminController::class, 'index']);
+ //   Route::post('/admin/withdraws/{id}/approve', [AdminController::class, 'approve']);
+ //   Route::post('/admin/withdraws/{id}/reject', [AdminController::class, 'reject']);
+//});
 
 use App\Http\Controllers\FCMTestController;
 

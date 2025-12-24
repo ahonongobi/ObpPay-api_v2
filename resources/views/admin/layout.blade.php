@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <title>ObpPay Admin</title>
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
 
     <!-- Bootstrap -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -33,7 +34,7 @@ body.dark-mode {
 
 /* SIDEBAR */
 .sidebar {
-    width: 270px;
+    width: 290px;
     height: 100vh;
     background-color: var(--indigo);
     padding: 25px;
@@ -258,6 +259,185 @@ body.dark-mode .stat-green {
     font-weight: 800;
 }
 
+
+/* ===============================
+   MOBILE SIDEBAR RESPONSIVE
+================================ */
+
+/* Mobile top bar */
+.mobile-topbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 60px;
+    background: #ffffff;
+    border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    align-items: center;
+    padding: 0 15px;
+    z-index: 1200;
+}
+
+body.dark-mode .mobile-topbar {
+    background: #111827;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+/* Sidebar mobile default (hidden) */
+
+
+/* Desktop behavior unchanged */
+/* ===============================
+   MOBILE SIDEBAR – FINAL FIX
+================================ */
+
+@media (max-width: 768px) {
+
+    /* Hide sidebar by default */
+    .sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 290px;
+        height: 100vh;
+        background-color: var(--indigo);
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+        z-index: 1300;
+    }
+
+    /* Show sidebar when toggled */
+    .sidebar.show {
+        transform: translateX(0);
+    }
+
+    /* Main content fix */
+    .main-content {
+        margin-left: 0 !important;
+        padding-top: 90px;
+    }
+}
+
+/* Overlay */
+.sidebar-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    z-index: 1250;
+    display: none;
+}
+
+/* Show overlay when sidebar open */
+.sidebar.show ~ .sidebar-overlay {
+    display: block;
+}
+
+/* Desktop behavior */
+@media (min-width: 769px) {
+    .sidebar {
+        transform: translateX(0);
+    }
+
+    .sidebar-overlay {
+        display: none !important;
+    }
+}
+
+
+
+
+/* ===============================
+   RESPONSIVE TABLES & CARDS
+================================ */
+
+/* Cards responsiveness */
+@media (max-width: 768px) {
+    .stat-card {
+        margin-bottom: 1rem;
+        font-size: 0.9rem;
+        padding: 15px;
+    }
+
+    .stat-card h2 {
+        font-size: 2rem;
+    }
+
+    .stat-card h6 {
+        font-size: 0.85rem;
+    }
+
+    /* Main content padding */
+    .main-content {
+        padding: 15px !important;
+    }
+
+    /* Table responsiveness */
+    .table-card {
+        overflow-x: auto;
+    }
+
+    .table-modern {
+        min-width: 600px; /* permet le scroll horizontal sur mobile */
+    }
+
+    /* Search input full width */
+    .search-container {
+        width: 100% !important;
+        margin-bottom: 0.75rem;
+    }
+
+    /* Action buttons below search on mobile */
+    .d-flex.justify-content-between.align-items-center.mb-3 {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.5rem;
+    }
+
+    .d-flex.justify-content-between.align-items-center.mb-3 button {
+        width: 100%;
+    }
+
+    /* Dashboard small cards in column */
+    .row.g-4 > .col-md-4 {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+}
+
+@media (max-width: 768px) {
+    /* Cards spacing */
+    .stat-card,
+    .table-card {
+        margin-bottom: 1rem; /* add space below each card */
+    }
+}
+
+
+.sidebar {
+    overflow-y: auto;      /* enable vertical scroll */
+    height: 100vh;         /* full viewport height */
+    -webkit-overflow-scrolling: touch; /* smooth scroll on mobile */
+}
+
+/* Small scrollbar for sidebar */
+.sidebar::-webkit-scrollbar {
+    width: 6px;              /* width of vertical scrollbar */
+}
+
+.sidebar::-webkit-scrollbar-track {
+    background: transparent;  /* track color */
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.3); /* thumb color */
+    border-radius: 3px;       /* rounded edges */
+}
+
+.sidebar::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(255, 255, 255, 0.5); /* on hover */
+}
+
 </style>
 
 
@@ -298,6 +478,18 @@ body.dark-mode .stat-green {
 
 <body>
 
+        <!-- Mobile top bar -->
+    <div class="mobile-topbar d-md-none">
+        <button class="btn btn-light" onclick="toggleSidebar()">
+            <i class="bi bi-list fs-3"></i>
+        </button>
+        <span class="fw-bold ms-2">ObpPay Admin</span>
+    </div>
+
+    <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+
+
     <!-- Sidebar -->
     <div class="sidebar shadow-lg">
         <h3 class="fw-bold mb-4">ObpPay Admin</h3>
@@ -331,6 +523,16 @@ body.dark-mode .stat-green {
         </a>
         @endif
 
+        {{-- crediter mon compte: only for superadmin    --}}
+        @if(auth()->user()->role === 'superadmin')
+        <a href="{{ route('admin.wallets.credit.self') }}"
+           class="{{ request()->routeIs('admin.wallets.credit.self') ? 'active' : '' }}">
+            <i class="bi bi-plus-circle me-2"></i> Créditer mon compte
+        </a>
+        @endif  
+
+        {{-- KYC VALIDATION --}}
+
         <a href="{{ route('admin.kyc.index') }}"
            class="{{ request()->routeIs('admin.kyc.index') ? 'active' : '' }}">
             <i class="bi bi-person-vcard me-2"></i> Validation KYC
@@ -347,9 +549,9 @@ body.dark-mode .stat-green {
             <i class="bi bi-wallet2 me-2"></i> Retraits Utilisateurs
         </a>
 
-    <a href="{{ route('admin.loans.index') }}"
-    class="{{ request()->routeIs('admin.loan.index') ? 'active' : '' }}">
-        <i class="bi bi-hand-thumbs-up-fill me-2"></i> Aide / Prêts
+        <a href="{{ route('admin.loans.index') }}"
+        class="{{ request()->routeIs('admin.loan.index') ? 'active' : '' }}">
+            <i class="bi bi-hand-thumbs-up-fill me-2"></i> Aide / Prêts
         </a>
 
         {{-- user withdrawal, Marketplace, Settings can be added later --}}
@@ -389,6 +591,75 @@ body.dark-mode .stat-green {
         @yield('content')
     </div>
 @yield('scripts')
+
+    <script>
+function toggleSidebar() {
+    document.querySelector('.sidebar').classList.toggle('show');
+}
+
+document.querySelectorAll('.sidebar a').forEach(link => {
+    link.addEventListener('click', () => {
+        if (window.innerWidth <= 768) {
+            document.querySelector('.sidebar').classList.remove('show');
+        }
+    });
+});
+
+window.addEventListener('resize', () => {
+    if (window.innerWidth > 768) {
+        document.querySelector('.sidebar').classList.remove('show');
+    }
+});
+</script>
+
+<script>
+const sidebar = document.querySelector('.sidebar');
+const overlay = document.querySelector('.sidebar-overlay');
+const hamburger = document.querySelector('.mobile-topbar button i');
+
+function toggleSidebar() {
+    sidebar.classList.toggle('show');
+    overlay.style.display = sidebar.classList.contains('show') ? 'block' : 'none';
+    toggleHamburgerIcon();
+}
+
+function toggleHamburgerIcon() {
+    if (sidebar.classList.contains('show')) {
+        hamburger.classList.replace('bi-list', 'bi-x');
+    } else {
+        hamburger.classList.replace('bi-x', 'bi-list');
+    }
+}
+
+// Close sidebar when clicking overlay
+overlay.addEventListener('click', () => {
+    sidebar.classList.remove('show');
+    overlay.style.display = 'none';
+    toggleHamburgerIcon();
+});
+
+// Close sidebar when clicking a link (mobile)
+document.querySelectorAll('.sidebar a').forEach(link => {
+    link.addEventListener('click', () => {
+        if (window.innerWidth <= 768) {
+            sidebar.classList.remove('show');
+            overlay.style.display = 'none';
+            toggleHamburgerIcon();
+        }
+    });
+});
+
+// Optional: close sidebar if window resized > 768px
+window.addEventListener('resize', () => {
+    if (window.innerWidth > 768) {
+        sidebar.classList.remove('show');
+        overlay.style.display = 'none';
+        hamburger.classList.replace('bi-x', 'bi-list');
+    }
+});
+</script>
+
+
 
 </body>
 </html>

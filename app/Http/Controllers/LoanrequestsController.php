@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Loanrequests;
 use Illuminate\Http\Request;
-
+use Carbon\Carbon;
 class LoanrequestsController extends Controller
 {
     public function eligibility(Request $request)
@@ -43,7 +43,35 @@ class LoanrequestsController extends Controller
             'custom_category' => 'nullable|string',
             'amount'          => 'required|numeric|min:1',
             'notes'           => 'nullable|string',
+            'due_date'       => 'nullable|date',
         ]);
+
+        // if duedate is  1 semines  then set to today + 7 days
+        // if 2 semaines then today + 14 days
+        // if 1 month then today + 30 days
+        
+
+        $duration = $data['due_date'] ?? '1 mois';
+
+        switch ($duration) {
+            case '1 semaine':
+                $dueDate = Carbon::now()->addDays(7);
+                break;
+
+            case '2 semaines':
+                $dueDate = Carbon::now()->addDays(14);
+                break;
+
+            case '1 mois':
+                $dueDate = Carbon::now()->addDays(30);
+                break;
+
+            default:
+                return response()->json([
+                    'message' => 'Durée invalide.'
+                ], 422);
+        }
+
 
         $loan = Loanrequests::create([
             'user_id'        => $request->user()->id,
@@ -52,11 +80,15 @@ class LoanrequestsController extends Controller
             'amount'         => $data['amount'],
             'status'         => 'pending',
             'notes'          => $data['notes'] ?? null,
+            // 'due_date'       => $data['due_date'] ?? today + 30 days,
+            'due_date'       => $data['due_date'] ?? now()->addDays(30),
         ]);
 
         return response()->json([
+            'success' => true,
             'message' => 'Demande de prêt envoyée.',
             'loan'    => $loan,
+            
         ], 201);
     }
 }

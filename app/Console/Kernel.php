@@ -20,6 +20,20 @@ class Kernel extends ConsoleKernel
         $schedule->call(function () {
             \Illuminate\Support\Facades\Http::post(env('APP_URL') . '/api/cron/installments/process');
         })->daily();
+
+        //  Weekly loan interest (1.595%) 
+        // cron:* * * * * php /path/to/your/project/artisan schedule:run >> /dev/null 2>&1
+        $schedule->command('loans:apply-weekly-interest')
+            ->weekly()
+            ->mondays()
+            ->at('00:05');
+
+        // Daily penalty application (1.595%)
+        // cron: * * * * * cd /home/obppayco/backoffice && php artisan schedule:run >> /dev/null 2>&1
+
+        $schedule->command('loans:apply-penalty')
+            ->dailyAt('00:10');
+            
     }
 
     /**

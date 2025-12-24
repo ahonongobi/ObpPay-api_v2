@@ -14,7 +14,12 @@ class Loanrequests extends Model
         'custom_category',
         'amount',
         'status',
-        'notes'
+        'notes',
+        'due_date',
+        'penalty_amount',
+        'weeks_late',
+        'interest_amount',
+        'interest_weeks',
     ];
 
     public function user()

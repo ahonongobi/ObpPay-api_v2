@@ -51,16 +51,40 @@ body.dark-mode .search-input:focus {
     box-shadow: 0 0 0 3px rgba(129,140,248,.25);
 }
 
+
+@media (max-width: 768px) {
+    /* Add spacing below the top row */
+    .d-flex.justify-content-between.align-items-center.mb-6 {
+        flex-direction: row; /* keep them in the same line */
+        flex-wrap: wrap;     /* allow wrapping if too narrow */
+        gap: 0.75rem;       /* spacing between elements */
+        margin-bottom: 1.5rem; /* space below the row */
+    }
+
+    /* Right side container spacing */
+    .d-flex.align-items-center.gap-3 {
+        gap: 0.75rem; /* horizontal spacing between solde and logout */
+    }
+
+    /* Make balance card and logout button shrink properly on mobile */
+    .d-flex.align-items-center.gap-3 > div,
+    .d-flex.align-items-center.gap-3 > form {
+        flex: 1 1 auto;
+        min-width: 120px; /* optional, ensure buttons don't shrink too much */
+    }
+}
+
+
 </style>
 @section('content')
 
-<div class="d-flex justify-content-between align-items-center mb-4">
+<div class="d-flex justify-content-between align-items-center mb-6">
     <h1 class="fw-bold text-primary">Dashboard</h1>
 
     <div class="d-flex align-items-center gap-3">
 
         <!-- BALANCE CARD -->
-        <div class="d-flex align-items-center bg-light p-2 px-3 rounded shadow-sm">
+        <div class="d-flex align-items-center bg-light p-2 px-3 rounded shadow-sm mb-3">
             <i class="bi bi-wallet2 text-primary fs-4 me-2"></i>
 
             <div>

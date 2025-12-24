@@ -6,7 +6,17 @@
     border-radius: 18px;
     padding: 25px;
     border: 1px solid #e5e7eb;
+
+    
 }
+
+@media (max-width: 768px) {
+    .credit-card {
+        padding: 15px;
+        margin-top: 20%;
+    }
+}
+
 
 /* DARK MODE */
 body.dark-mode .credit-card {

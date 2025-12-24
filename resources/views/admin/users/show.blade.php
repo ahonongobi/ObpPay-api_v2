@@ -234,6 +234,25 @@ body.dark-mode .btn-close {
             <p class="text-muted">Sortants : <strong class="text-danger">{{ number_format($stats['transfer_out'],0,',',' ') }} XOF</strong></p>
         </div>
     </div>
+
+     {{-- weeklyInterest --}}
+
+
+    <div class="col-md-4">
+        <div class="card stat-card shadow rounded-4 p-4">
+            <h6 class="text-muted">Intérêts hebdomadaires (sur l'aide/prêt)</h6>
+            <h3 class="fw-bold text-success">{{ number_format($stats['weeklyInterest'],0,',',' ') }} XOF</h3>
+        </div>
+    </div>
+
+    {{-- weeklyPenalty on loans or aide --}}
+    <div class="col-md-4">
+        <div class="card stat-card shadow rounded-4 p-4">
+            <h6 class="text-muted">Pénalités hebdomadaires</h6>
+            <h3 class="fw-bold text-danger">{{ number_format($stats['weeklyPenalty'],0,',',' ') }} XOF</h3>
+        </div>
+    </div>
+    
 </div>
 
 <!-- KYC SECTION -->

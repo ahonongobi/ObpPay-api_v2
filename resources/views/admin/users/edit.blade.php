@@ -2,6 +2,24 @@
 
 @section('content')
 
+{{-- show validation errors --}}
+@if ($errors->any())
+    <div class="alert alert-danger">
+        <ul>
+            @foreach ($errors->all() as $error)
+                <li>{{ $error }}</li>
+            @endforeach
+        </ul>
+    </div>
+@endif
+
+{{-- success message --}}
+@if (session('success'))
+    <div class="alert alert-success">
+        {{ session('success') }}
+    </div>
+@endif
+
 <h1 class="fw-bold text-primary mb-4">Modifier l’utilisateur</h1>
 
 <div class="card shadow-lg p-4 rounded-4 edit-card">

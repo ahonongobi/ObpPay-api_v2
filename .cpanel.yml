@@ -18,3 +18,4 @@ deployment:
     - rm -f /home/obppayco/laravel-project/bootstrap/cache/config.php
     - rm -f /home/obppayco/laravel-project/bootstrap/cache/packages.php
     #- rm -rf /home/obppayco/laravel-project/storage/framework/views/*
+    # FIREBASE_CREDENTIALS=/opt/lampp/htdocs/obppay-backend/storage/app/firebase/obppay-adminsdk.json

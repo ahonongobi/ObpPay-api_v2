@@ -13,7 +13,7 @@ use Illuminate\Validation\ValidationException;
 use App\Helpers\SmsHelper;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
-
+use App\Services\FirebaseService;
 use Str;
 
 class AuthController extends Controller
@@ -32,9 +32,81 @@ class AuthController extends Controller
     private function startRegistration(Request $request)
     {
         $data = $request->validate([
+            'name'      => 'required|string|max:255',
+            'phone'     => 'required|string|max:20|unique:users,phone|unique:pending_registrations,phone',
+            'password'  => 'required|string|min:6',
+            'fcm_token' => 'required|string',
+        ]);
+
+        //  Anti-spam OTP
+        $otpCount = otps::where('phone', $data['phone'])
+            ->where('created_at', '>=', now()->subMinutes(5))
+            ->count();
+
+        if ($otpCount >= 2) {
+            return response()->json([
+                'message' => 'Usage suspect détecté. Veuillez réessayer plus tard.'
+            ], 429);
+        }
+
+        //  Générer OTP
+        $otp = rand(1000, 9999);
+
+        //  Sauvegarder OTP
+        otps::create([
+            'phone'      => $data['phone'],
+            'code'       => $otp,
+            'expires_at' => now()->addMinutes(3),
+        ]);
+
+        
+
+        //  Envoyer OTP par notification Firebase
+        try {
+
+            //  Sauvegarder inscription temporaire
+            PendingRegistration::create([
+                'name'      => $data['name'],
+                'phone'     => $data['phone'],
+                'password'  => Hash::make($data['password']),
+                'fcm_token' => $data['fcm_token'],
+            ]);
+
+            
+            $firebase = new FirebaseService();
+
+            $firebase->sendToToken(
+                $data['fcm_token'],
+                "Code de vérification",
+                "Votre code OTP est : $otp",
+                [
+                    "type"    => "otp",
+                    "otp"     => (string) $otp, // pour dev uniquement
+                    "purpose" => "register"
+                ]
+            );
+        } catch (\Exception $e) {
+            Log::error("OTP FCM ERROR: " . $e->getMessage());
+
+            return response()->json([
+                'message' => 'Impossible d’envoyer le code pour le moment.'
+            ], 500);
+        }
+
+        return response()->json([
+            'message' => 'OTP envoyé avec succès.',
+            'otp_required' => true
+        ]);
+    }
+
+
+    private function old_startRegistration(Request $request)
+    {
+        $data = $request->validate([
             'name'     => 'required|string|max:255',
             'phone'    => 'required|string|max:20|unique:users,phone|unique:pending_registrations,phone',
             'password' => 'required|string|min:6',
+            'fcm_token' => 'required|string',
         ]);
 
         
@@ -42,19 +114,42 @@ class AuthController extends Controller
         // générer OTP  4 chiffres 
         //$otp = rand(1000, 9999);
         $otp = rand(1000, 9999);
-        $smsStatus = SmsHelper::sendOtp($data['phone'], $otp);
+        // $smsStatus = SmsHelper::sendOtp($data['phone'], $otp);
 
-        if (!$smsStatus) {
+        try {
+            $firebase = new FirebaseService();
+
+            $firebase->sendToToken(
+                $data['fcm_token'],
+                "Code de vérification",
+                "Votre code OTP est : $otp",
+                [
+                    "type" => "otp",
+                    "purpose" => "register"
+                ]
+            );
             return response()->json([
-                'message' => 'Impossible d’envoyer l\'OTP pour le moment.'
+                'message' => 'OTP envoyé avec succès.',
+                'otp_required' => true
+            ]);
+        } catch (\Exception $e) {
+            Log::error("OTP FCM ERROR: " . $e->getMessage());
+
+            return response()->json([
+                'message' => 'Impossible d’envoyer le code pour le moment.'
             ], 500);
         }
+
+
+        // if fails 
+
 
         // enregistrer temporairement
         PendingRegistration::create([
             'name'     => $data['name'],
             'phone'    => $data['phone'],
             'password' => Hash::make($data['password']),
+            'fcm_token' => $data['fcm_token'],
         ]);
         // enregistrer OTP
 

@@ -4,7 +4,12 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Services\FeeService;
 use Illuminate\Http\Request;
+use App\Models\Loanrequest;
+use App\Models\Loanrequests;
+use Carbon\Carbon;
+
 
 class UserController extends Controller
 {
@@ -34,6 +39,57 @@ class UserController extends Controller
             'purchases' => $user->transactions->where('type', 'purchase')->sum('amount'),
         ];
 
+        // Weekly interest and penalty
+        // --- Weekly interest and penalty calculations ---
+        //$balance = $user->wallet->balance ?? 0;
+
+
+        //$stats['weeklyInterest'] = FeeService::weeklyInterest($balance);
+        $stats['weeklyInterest'] = 0;
+        $stats['weeklyPenalty']  = 0;
+
+        $loan = Loanrequests::where('user_id', $user->id)
+            ->where('status', 'approved')
+            ->latest()
+            ->first();
+
+
+        if ($loan) {
+
+            $amount = $loan->amount;
+
+            // ====== WEEKLY INTEREST (depuis création) ======
+            $weeksSinceLoan = Carbon::parse($loan->created_at)->diffInWeeks(now());
+            $interest = $weeksSinceLoan * FeeService::weeklyInterest($amount);
+
+            // Update loan if needed
+            if ($interest != $loan->interest_amount) {
+                $loan->update([
+                    'interest_amount' => $interest,
+                    'interest_weeks'  => $weeksSinceLoan,
+                ]);
+            }
+
+            $stats['weeklyInterest'] = $interest;
+
+            // ====== WEEKLY PENALTY (si retard) ======
+            if ($loan->due_date && now()->greaterThan($loan->due_date)) {
+
+                $weeksLate = Carbon::parse($loan->due_date)->diffInWeeks(now());
+                $penalty = $weeksLate * FeeService::weeklyPenalty($amount);
+
+                if ($penalty != $loan->penalty_amount) {
+                    $loan->update([
+                        'penalty_amount' => $penalty,
+                        'weeks_late'     => $weeksLate,
+                    ]);
+                }
+
+                $stats['weeklyPenalty'] = $penalty;
+            }
+        }
+
+
         // KYC status global
         $kycStatus = $user->kyc->contains('status', 'approved') ? 'approved' : ($user->kyc->contains('status', 'pending') ? 'pending' : 'none');
 
@@ -50,15 +106,18 @@ class UserController extends Controller
 
     public function update(Request $request, $id)
     {
+
+        $user = User::findOrFail($id);
+
         $request->validate([
             'name' => 'required|string|max:255',
-            'phone' => 'required|string|max:20',
+            'phone' => 'required|string|max:20|unique:users,phone,' . $user->id, // <--- ignore current user
             'email' => 'nullable|email|max:255',
             'status' => 'required|in:active,blocked',
             'balance' => 'required|numeric',
         ]);
 
-        $user = User::findOrFail($id);
+       // $user = User::findOrFail($id);
 
         // update user fields
         $user->update([

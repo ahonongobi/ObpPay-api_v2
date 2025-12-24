@@ -101,4 +101,51 @@ class WalletController extends Controller
         return redirect()->route('admin.wallets.credit')
             ->with('success', 'Crédit effectué avec succès (déduit du solde admin).');
     }
+
+
+
+    // showSelfCreditForm
+    public function showSelfCreditForm()
+    {
+        return view('admin.wallets.creditself');
+    }
+
+    // processSelfCredit
+    public function processSelfCredit(Request $request)
+    {
+        $data = $request->validate([
+            'amount' => 'required|numeric|min:0.01',
+            'reason' => 'nullable|string|max:255',
+        ]);
+        $admin = auth()->user();  // The admin performing the operation
+        $adminWallet = $admin->wallet;
+        if (!$adminWallet) {
+            return back()->with("error", "Aucun portefeuille trouvé pour l'administrateur.");
+        }
+        // Créditer le compte superadmin
+        $adminWallet->increment('balance', $data['amount']);    
+        \App\Models\Transactions::create([
+            'user_id'    => $admin->id,
+            'type'       => 'self_credit_in', // entrée côté admin
+            'amount'     => $data['amount'],
+            'currency'   => $adminWallet->currency,
+            'description' => $data['reason'] ?? 'Crédit de compte super administrateur',
+            'status'     => 'completed',
+            'meta'       => [
+                'reason' => $data['reason'] ?? '',
+            ],
+        ]);
+        // LOG ADMIN
+        admin_log(
+            'wallet',
+            "Crédit de {$data['amount']} {$adminWallet->currency} pour le compte super administrateur {$admin->obp_id}",
+            [
+                'amount' => $data['amount'],
+                'reason' => $data['reason'] ?? null,
+            ]
+        );
+        return redirect()->route('admin.wallets.credit.self')
+            ->with('success', 'Crédit de votre compte super administrateur effectué avec succès.');
+
+    }
 }
